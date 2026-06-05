@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-MODEL_PATH = '/home/zar/program_recommender/models/program_recommender_id.pkl'
+MODEL_PATH = r'C:\Users\user\Documents\UAAMS\UAAMS-Recommendation-model\models\program_recommender_id.pkl'
 
 def load_model():
     """Load the pickled model"""
@@ -215,6 +215,6 @@ if __name__ == '__main__':
         print('        -d \'{"fsc": 63, "matric": 70}\'')
         print("\n" + "="*60)
         
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=True, host='0.0.0.0', port=4000)
     else:
         print("\n❌ Failed to load model. Please run training first!")
