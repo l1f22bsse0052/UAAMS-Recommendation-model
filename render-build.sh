@@ -4,7 +4,7 @@
 echo "🔨 Building the application..."
 
 # Install Python dependencies
-pip install -r requirements.txt
+pip install -r src/requirements.txt
 
 # Train the model
 echo "🔨 Training the model..."
