@@ -15,7 +15,7 @@ from pathlib import Path
 app = Flask(__name__)
 CORS(app)
 
-# Get the absolute path to the directory where this file lives
+# ==================== CONFIGURATION ====================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'models', 'program_recommender_id.pkl')
 EXCEL_PATH = os.path.join(BASE_DIR, 'data', 'Book1(1).xlsx')
@@ -30,6 +30,8 @@ os.makedirs(BACKUP_DIR, exist_ok=True)
 MODEL = None
 IS_TRAINING = False
 TRAINING_LOCK = threading.Lock()
+
+# ==================== MODEL LOADING & TRAINING ====================
 
 def load_model():
     """Load the pickled model, or train if it doesn't exist"""
@@ -331,6 +333,8 @@ def add_program_to_excel(program_data):
     except Exception as e:
         print(f"❌ Error adding program to Excel: {e}")
         return False
+
+# ==================== RECOMMENDATION ENGINE ====================
 
 def estimate_test_score(matric_pct, fsc_pct):
     """Estimate entry test score based on board marks"""
@@ -736,35 +740,38 @@ def restore_backup(backup_filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ==================== MAIN ====================
+# ==================== LOAD MODEL ON STARTUP ====================
+# This runs when Gunicorn starts the app
+print("="*60)
+print("🚀 STARTING RECOMMENDATION API SERVER WITH PIPELINE")
+print("Formula: Test% = 0.7×FSc + 0.3×Matric")
+print("Then: Predicted AGGR using each university's weights")
+print("="*60)
+
+# Load model - this will run for both Gunicorn and direct execution
+MODEL = load_model()
+
+if MODEL:
+    print(f"\n📊 Loaded {MODEL['metadata']['total_programs']} programs")
+    print(f"📡 Server running on port 10000 (Render) or 4000 (local)")
+else:
+    print("\n⚠️  Model not loaded. Please check the error messages above.")
+    print("💡 The server will still run but /recommend will return errors.")
+
+# ==================== MAIN (for local development) ====================
 
 if __name__ == '__main__':
-    print("="*60)
-    print("🚀 STARTING RECOMMENDATION API SERVER WITH PIPELINE")
-    print("Formula: Test% = 0.7×FSc + 0.3×Matric")
-    print("Then: Predicted AGGR using each university's weights")
-    print("="*60)
+    print("\n🔗 Endpoints:")
+    print("   POST /recommend        - Get program recommendations")
+    print("   POST /calculate_aggr   - Calculate AGGR for specific program")
+    print("   POST /add-program      - Add new program and retrain")
+    print("   POST /add-programs-bulk - Add multiple programs")
+    print("   POST /retrain          - Manually retrain model")
+    print("   GET  /training-status  - Check training status")
+    print("   GET  /model-info       - Get model information")
+    print("   GET  /health           - Health check")
+    print("   GET  /backup           - List available backups")
+    print("   POST /restore/<file>   - Restore from backup")
+    print("\n" + "="*60)
     
-    # Load model
-    MODEL = load_model()
-    
-    if MODEL:
-        print(f"\n📊 Loaded {MODEL['metadata']['total_programs']} programs")
-        print("\n📡 Server running on http://localhost:4000")
-        print("\n🔗 Endpoints:")
-        print("   POST /recommend        - Get program recommendations")
-        print("   POST /calculate_aggr   - Calculate AGGR for specific program")
-        print("   POST /add-program      - Add new program and retrain")
-        print("   POST /add-programs-bulk - Add multiple programs")
-        print("   POST /retrain          - Manually retrain model")
-        print("   GET  /training-status  - Check training status")
-        print("   GET  /model-info       - Get model information")
-        print("   GET  /health           - Health check")
-        print("   GET  /backup           - List available backups")
-        print("   POST /restore/<file>   - Restore from backup")
-        print("\n" + "="*60)
-        
-        app.run(debug=True, host='0.0.0.0', port=4000)
-    else:
-        print("\n❌ Failed to load model. Please run training first!")
-        print("\n💡 Run: python train_model_id.py")
+    app.run(debug=True, host='0.0.0.0', port=4000)
