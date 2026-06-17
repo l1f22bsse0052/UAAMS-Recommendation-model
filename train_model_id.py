@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import os
 import re
+from datetime import datetime
 
 def extract_weights(formula):
     """Extract matric, inter, and test weights from formula string"""
@@ -21,10 +22,8 @@ def extract_weights(formula):
     return w_matric, w_inter, w_test
 
 def calculate_weighted_score_needed(aggr, w_matric, w_fsc, w_test, assumed_test_pct=0.50):
-    """
-    Calculate what weighted score (60% FSc + 40% Matric) would be needed
-    to achieve the closing AGGR.
-    """
+    """Calculate what weighted score (60% FSc + 40% Matric) would be needed
+    to achieve the closing AGGR."""
     # Calculate test contribution to AGGR
     test_contribution = assumed_test_pct * 100 * w_test
     
@@ -77,6 +76,14 @@ def load_excel_data(excel_path):
         df['UNIVERSITY_ID'] = None
         print("⚠️  UNIVERSITY_ID column not found, setting to None")
     
+    if 'FORMULA' not in df.columns:
+        df['FORMULA'] = None
+        print("⚠️  FORMULA column not found, setting to None")
+    
+    if 'SOURCE_LINK' not in df.columns:
+        df['SOURCE_LINK'] = None
+        print("⚠️  SOURCE_LINK column not found, setting to None")
+    
     if 'CAMPUS' not in df.columns:
         # Try to extract campus from CAMPUS|PROGRAM if not available
         df['CAMPUS'] = df['CAMPUS|PROGRAM'].apply(lambda x: x.split('|')[0] if '|' in str(x) else None)
@@ -92,8 +99,8 @@ def load_excel_data(excel_path):
     
     return df
 
-def train_model(excel_path='/home/zar/program_recommender/data/Book1(1).xlsx', 
-                model_path='/home/zar/program_recommender/models/program_recommender_id.pkl'):
+def train_model(excel_path='data/Book1(1).xlsx', 
+                model_path='models/program_recommender_id.pkl'):
     """Main training function"""
     
     print("="*60)
@@ -131,7 +138,7 @@ def train_model(excel_path='/home/zar/program_recommender/data/Book1(1).xlsx',
             'weighting': {'fsc_weight': 0.6, 'matric_weight': 0.4},
             'version': '2.0',
             'description': 'Simple weighted score comparison with MongoDB IDs',
-            'training_date': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+            'training_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
     }
     
@@ -210,8 +217,9 @@ if __name__ == "__main__":
     if success:
         print("\n🎉 Training completed successfully!")
         print("\n💡 Next steps:")
-        print("   1. Run: python flask_server.py")
+        print("   1. Run: python flask_server_id.py")
         print("   2. Test: python test_api.py")
         print("   3. API will return both mongo_id and university_id")
+        print("   4. Use POST /add-program to add new programs")
     else:
         print("\n❌ Training failed! Please check the error messages above.")
